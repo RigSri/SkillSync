@@ -26,19 +26,11 @@ const skillSchema = new mongoose.Schema(
       required: true,
     },
 
-    category: {
-      type: String,
-      enum: [
-        "Programming",
-        "Design",
-        "Music",
-        "Language",
-        "Business",
-        "Fitness",
-        "Other",
-      ],
-      default: "Other",
-    },
+   category: {
+    type: String,
+    trim: true,
+    default: "General",
+},
 
     proof: {
       type: String,
