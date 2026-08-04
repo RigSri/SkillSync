@@ -12,6 +12,8 @@ const skillSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 2,
+      maxlength: 50,
     },
 
     type: {
@@ -26,11 +28,12 @@ const skillSchema = new mongoose.Schema(
       required: true,
     },
 
-   category: {
-    type: String,
-    trim: true,
-    default: "General",
-},
+    category: {
+      type: String,
+      trim: true,
+      default: "General",
+      maxlength: 30,
+    },
 
     proof: {
       type: String,
@@ -45,8 +48,14 @@ const skillSchema = new mongoose.Schema(
 
 // Prevent duplicate skills of the same type for a user
 skillSchema.index(
-  { user: 1, name: 1, type: 1 },
-  { unique: true }
+  {
+    user: 1,
+    name: 1,
+    type: 1,
+  },
+  {
+    unique: true,
+  }
 );
 
 module.exports = mongoose.model("Skill", skillSchema);

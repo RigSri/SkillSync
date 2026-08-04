@@ -5,29 +5,31 @@ const addSkill = async (req, res) => {
     try {
         const { name, type, level, category, proof } = req.body;
 
-        if (!name || !type || !level || !category) {
+        if (!name || !name.trim() || !type || !level) {
             return res.status(400).json({
                 success: false,
                 message: "Please provide all required fields.",
             });
         }
 
+        const normalizedName = name.trim().toLowerCase();
+
         const existingSkill = await Skill.findOne({
             user: req.user.id,
-            name,
+            name: normalizedName,
             type,
         });
 
         if (existingSkill) {
             return res.status(409).json({
                 success: false,
-                message: "Skill already exists.",
+                message: "You already have this skill.",
             });
         }
 
         const skill = await Skill.create({
             user: req.user.id,
-            name,
+            name: normalizedName,
             type,
             level,
             category,
@@ -43,12 +45,20 @@ const addSkill = async (req, res) => {
     } catch (error) {
         console.error(error);
 
+        if (error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: "You already have this skill.",
+            });
+        }
+
         return res.status(500).json({
             success: false,
             message: "Internal Server Error",
         });
     }
 };
+
 const getMySkills = async (req, res) => {
     try {
         const skills = await Skill.find({
@@ -70,9 +80,11 @@ const getMySkills = async (req, res) => {
         });
     }
 };
+
 const updateSkill = async (req, res) => {
     try {
         const { id } = req.params;
+
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({
                 success: false,
@@ -98,11 +110,25 @@ const updateSkill = async (req, res) => {
             });
         }
 
-        skill.name = name || skill.name;
-        skill.type = type || skill.type;
-        skill.level = level || skill.level;
-        skill.category = category || skill.category;
-        skill.proof = proof ?? skill.proof;
+        if (name && name.trim()) {
+            skill.name = name.trim().toLowerCase();
+        }
+
+        if (type) {
+            skill.type = type;
+        }
+
+        if (level) {
+            skill.level = level;
+        }
+
+        if (category) {
+            skill.category = category;
+        }
+
+        if (proof !== undefined) {
+            skill.proof = proof;
+        }
 
         await skill.save();
 
@@ -115,12 +141,20 @@ const updateSkill = async (req, res) => {
     } catch (error) {
         console.error(error);
 
+        if (error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: "You already have this skill.",
+            });
+        }
+
         return res.status(500).json({
             success: false,
             message: "Internal Server Error",
         });
     }
 };
+
 const deleteSkill = async (req, res) => {
     try {
         const { id } = req.params;
@@ -164,9 +198,10 @@ const deleteSkill = async (req, res) => {
         });
     }
 };
-    module.exports = {
-        addSkill,
-        getMySkills,
-        updateSkill,
-        deleteSkill,
-    };
+
+module.exports = {
+    addSkill,
+    getMySkills,
+    updateSkill,
+    deleteSkill,
+};
