@@ -19,7 +19,7 @@ const getMatches = async (req, res) => {
         // Fetch all other users' skills
         const otherSkills = await Skill.find({
             user: { $ne: req.user.id },
-        }).populate("user", "name email");
+        }).populate("user", "name email profilePicture")
 
         // Group skills by user
         const usersMap = {};
@@ -88,9 +88,12 @@ for (const user of Object.values(usersMap)) {
 
 return res.status(200).json({
     success: true,
-    perfectMatches,
-    canTeachYou,
-    wantToLearnFromYou,
+    message: "Matches fetched successfully.",
+    data: {
+        perfectMatches,
+        canTeachYou,
+        wantToLearnFromYou,
+    },
 });
     } catch (error) {
         console.error(error);

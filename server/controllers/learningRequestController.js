@@ -59,7 +59,7 @@ const sendLearningRequest = async (req, res) => {
         const existingRequest = await LearningRequest.findOne({
             sender: req.user.id,
             receiver: receiverId,
-            status: "Pending",
+            status: "pending",
         });
 
         if (existingRequest) {
@@ -79,8 +79,8 @@ const sendLearningRequest = async (req, res) => {
 
         // Populate sender & receiver details
         const populatedRequest = await LearningRequest.findById(request._id)
-            .populate("sender", "name email")
-            .populate("receiver", "name email");
+            .populate("sender", "name email profilePicture")
+            .populate("receiver", "name email profilePicture")
 
         return res.status(201).json({
             success: true,
@@ -109,15 +109,16 @@ const getSentRequests = async (req, res) => {
         const requests = await LearningRequest.find({
     sender: req.user.id,
 })
-    .populate("sender", "name email")
-    .populate("receiver", "name email")
+    .populate("sender", "name email profilePicture")
+.populate("receiver", "name email profilePicture")
     .sort({ createdAt: -1 });
 
-        return res.status(200).json({
-            success: true,
-            count: requests.length,
-            data: requests,
-        });
+       return res.status(200).json({
+    success: true,
+    message: "Sent requests fetched successfully.",
+    count: requests.length,
+    data: requests,
+});
 
     } catch (error) {
         console.error(error);
@@ -133,15 +134,16 @@ const getReceivedRequests = async (req, res) => {
         const requests = await LearningRequest.find({
             receiver: req.user.id,
         })
-            .populate("sender", "name email")
-            .populate("receiver", "name email")
+            .populate("sender", "name email profilePicture")
+.populate("receiver", "name email profilePicture")
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
-            success: true,
-            count: requests.length,
-            data: requests,
-        });
+    success: true,
+    message: "Received requests fetched successfully.",
+    count: requests.length,
+    data: requests,
+});
 
     } catch (error) {
         console.error(error);
@@ -180,14 +182,14 @@ const acceptLearningRequest = async (req, res) => {
             });
         }
 
-        if (request.status !== "Pending") {
+        if (request.status !== "pending") {
             return res.status(400).json({
                 success: false,
                 message: "This request has already been processed.",
             });
         }
 
-        request.status = "Accepted";
+        request.status = "accepted";
 
         await request.save();
 
@@ -233,14 +235,14 @@ const rejectLearningRequest = async (req, res) => {
             });
         }
 
-        if (request.status !== "Pending") {
+        if (request.status !== "pending") {
             return res.status(400).json({
                 success: false,
                 message: "This request has already been processed.",
             });
         }
 
-        request.status = "Rejected";
+        request.status = "rejected";
 
         await request.save();
 
@@ -286,14 +288,14 @@ const cancelLearningRequest = async (req, res) => {
             });
         }
 
-        if (request.status !== "Pending") {
+        if (request.status !== "pending") {
             return res.status(400).json({
                 success: false,
                 message: "Only pending requests can be cancelled.",
             });
         }
 
-        request.status = "Cancelled";
+        request.status = "cancelled";
 
         await request.save();
 

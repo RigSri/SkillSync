@@ -30,12 +30,12 @@ const learningRequestSchema = new mongoose.Schema(
         status: {
             type: String,
             enum: [
-                "Pending",
-                "Accepted",
-                "Rejected",
-                "Cancelled",
-            ],
-            default: "Pending",
+    "pending",
+    "accepted",
+    "rejected",
+    "cancelled"
+],
+            default: "pending",
         },
     },
     {

@@ -74,10 +74,12 @@ const getMySkills = async (req, res) => {
     } catch (error) {
         console.error(error);
 
-        return res.status(500).json({
-            success: false,
-            message: "Internal Server Error",
-        });
+        return res.status(200).json({
+    success: true,
+    message: "Skills fetched successfully.",
+    count: skills.length,
+    data: skills,
+});
     }
 };
 
