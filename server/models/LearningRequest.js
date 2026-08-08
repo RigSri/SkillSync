@@ -37,6 +37,11 @@ const learningRequestSchema = new mongoose.Schema(
 ],
             default: "pending",
         },
+        skill: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Skill",
+    required: true,
+},
     },
     {
         timestamps: true,
@@ -47,10 +52,13 @@ learningRequestSchema.index(
     {
         sender: 1,
         receiver: 1,
-        status: 1,
+        skill: 1,
     },
     {
         unique: true,
+        partialFilterExpression: {
+            status: "pending",
+        },
     }
 );
 

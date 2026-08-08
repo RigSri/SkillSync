@@ -57,10 +57,33 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    availability: [
+    {
+        day: {
+            type: String,
+            enum: [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ],
+        },
+        startTime: {
+            type: String,
+        },
+        endTime: {
+            type: String,
+        },
+    },
+],
   },
   {
     timestamps: true,
   }
+  
 );
 userSchema.set("toJSON", {
     transform: function (doc, ret) {
