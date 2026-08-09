@@ -59,37 +59,36 @@ const getMatches = async (req, res) => {
                 learnSkills.includes(skill)
             );
 
-            // Both users can teach each other
-            if (matchedTeach.length > 0 && matchedLearn.length > 0) {
-                perfectMatches.push({
-                    userId: user.userId,
-                    name: user.name,
-                    email: user.email,
-                    matchedTeach,
-                    matchedLearn,
-                });
-            }
-
-            // They can teach me something I want to learn
-            if (matchedLearn.length > 0) {
-                canTeachYou.push({
-                    userId: user.userId,
-                    name: user.name,
-                    email: user.email,
-                    skills: matchedLearn,
-                });
-            }
-
-            // They want to learn something I can teach
-            if (matchedTeach.length > 0) {
-                wantToLearnFromYou.push({
-                    userId: user.userId,
-                    name: user.name,
-                    email: user.email,
-                    skills: matchedTeach,
-                });
-            }
+                    // Perfect match gets highest priority
+        if (matchedTeach.length > 0 && matchedLearn.length > 0) {
+            perfectMatches.push({
+                userId: user.userId,
+                name: user.name,
+                email: user.email,
+                matchedTeach,
+                matchedLearn,
+            });
         }
+
+        // Only one-way matches go into the remaining sections
+        else if (matchedLearn.length > 0) {
+            canTeachYou.push({
+                userId: user.userId,
+                name: user.name,
+                email: user.email,
+                skills: matchedLearn,
+            });
+        }
+
+        else if (matchedTeach.length > 0) {
+            wantToLearnFromYou.push({
+                userId: user.userId,
+                name: user.name,
+                email: user.email,
+                skills: matchedTeach,
+            });
+        }
+    }
 
         return res.status(200).json({
             success: true,

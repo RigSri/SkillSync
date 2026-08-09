@@ -3,6 +3,7 @@ function Button({
     variant = "primary",
     type = "button",
     onClick,
+    disabled = false,
     className = "",
 }) {
     const variants = {
@@ -21,19 +22,22 @@ function Button({
 
     return (
         <button
-            type={type}
-            onClick={onClick}
-            className={`
-                px-5
-                h-10
-                rounded-xl
-                font-medium
-                transition-all
-                duration-200
-                ${variants[variant]}
-                ${className}
-            `}
-        >
+    type={type}
+    onClick={onClick}
+    disabled={disabled}
+    className={`
+        px-5
+        h-10
+        rounded-xl
+        font-medium
+        transition-all
+        duration-200
+        disabled:cursor-not-allowed
+        disabled:opacity-60
+        ${variants[variant]}
+        ${className}
+    `}
+>
             {children}
         </button>
     );
