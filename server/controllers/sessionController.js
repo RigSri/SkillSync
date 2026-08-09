@@ -328,7 +328,50 @@ const getMySessions = async (req, res) => {
     }
 };
 
+// Get upcoming scheduled sessions
+const getUpcomingSessions = async (req, res) => {
+    try {
+        const sessions = await Session.find({
+            $or: [
+                { teacher: req.user.id },
+                { learner: req.user.id },
+            ],
+            status: "scheduled",
+            scheduledAt: { $gte: new Date() },
+        })
+            .populate(
+                "skill",
+                "name type level category"
+            )
+            .populate(
+                "teacher",
+                "name email profilePicture"
+            )
+            .populate(
+                "learner",
+                "name email profilePicture"
+            )
+            .populate(
+                "match",
+                "users skills status"
+            )
+            .sort({ scheduledAt: 1 });
 
+        return res.status(200).json({
+            success: true,
+            message: "Upcoming sessions fetched successfully.",
+            count: sessions.length,
+            data: sessions,
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error.",
+        });
+    }
+};
 // Get one session
 const getSessionById = async (req, res) => {
     try {
@@ -576,13 +619,98 @@ const cancelSession = async (req, res) => {
         });
     }
 };
+// Update session progress
+const updateSessionProgress = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { percentage, milestones } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid session ID.",
+            });
+        }
+
+        const session = await Session.findById(sessionId);
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                message: "Session not found.",
+            });
+        }
+
+        const isParticipant =
+            session.teacher.toString() === req.user.id ||
+            session.learner.toString() === req.user.id;
+
+        if (!isParticipant) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not a participant in this session.",
+            });
+        }
+
+        if (percentage !== undefined) {
+            if (
+                typeof percentage !== "number" ||
+                percentage < 0 ||
+                percentage > 100
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Progress percentage must be between 0 and 100.",
+                });
+            }
+
+            session.progress.percentage = percentage;
+        }
+
+        if (milestones !== undefined) {
+            if (!Array.isArray(milestones)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Milestones must be an array.",
+                });
+            }
+
+            session.progress.milestones = milestones;
+        }
+
+        await session.save();
+
+        const updatedSession = await Session.findById(
+            session._id
+        )
+            .populate("match")
+            .populate("skill")
+            .populate("teacher", "name email profilePicture")
+            .populate("learner", "name email profilePicture");
+
+        return res.status(200).json({
+            success: true,
+            message: "Session progress updated successfully.",
+            data: updatedSession,
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error.",
+        });
+    }
+};
 
 
 module.exports = {
     createSession,
     getMySessions,
+    getUpcomingSessions,
     getSessionById,
     updateSession,
     completeSession,
     cancelSession,
+    updateSessionProgress,
 };

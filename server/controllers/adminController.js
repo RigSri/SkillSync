@@ -62,7 +62,68 @@ const getReports = async (req, res) => {
         });
     }
 };
+// Get users who have been reported multiple times
+const getFlaggedUsers = async (req, res) => {
+    try {
+        const flaggedUsers = await Report.aggregate([
+            {
+                $group: {
+                    _id: "$reportedUser",
+                    reportCount: {
+                        $sum: 1,
+                    },
+                },
+            },
+            {
+                $match: {
+                    reportCount: {
+                        $gte: 2,
+                    },
+                },
+            },
+            {
+                $sort: {
+                    reportCount: -1,
+                },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "user",
+                },
+            },
+            {
+                $unwind: "$user",
+            },
+            {
+                $project: {
+                    _id: 0,
+                    userId: "$user._id",
+                    name: "$user.name",
+                    email: "$user.email",
+                    isBlocked: "$user.isBlocked",
+                    reportCount: 1,
+                },
+            },
+        ]);
 
+        return res.status(200).json({
+            success: true,
+            message: "Flagged users fetched successfully.",
+            count: flaggedUsers.length,
+            data: flaggedUsers,
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error.",
+        });
+    }
+};
 
 // Resolve or dismiss a report
 const updateReportStatus = async (req, res) => {
@@ -279,6 +340,7 @@ const getAnalytics = async (req, res) => {
 module.exports = {
     getUsers,
     getReports,
+    getFlaggedUsers,
     updateReportStatus,
     blockUser,
     unblockUser,

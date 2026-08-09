@@ -42,17 +42,50 @@ const sessionSchema = new mongoose.Schema(
         },
 
         notes: {
-            type: String,
-            default: "",
-            maxlength: 2000,
-        },
+    type: String,
+    default: "",
+    maxlength: 2000,
+},
 
-        resources: [
-            {
-                name: String,
-                url: String,
+resources: [
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        url: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+    },
+],
+
+progress: {
+    percentage: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100,
+    },
+
+    milestones: [
+        {
+            title: {
+                type: String,
+                required: true,
+                trim: true,
+                maxlength: 200,
             },
-        ],
+
+            completed: {
+                type: Boolean,
+                default: false,
+            },
+        },
+    ],
+},
 
         status: {
             type: String,

@@ -16,10 +16,40 @@ const messageSchema = new mongoose.Schema(
 
         text: {
             type: String,
-            required: true,
+            default: "",
             trim: true,
             maxlength: 2000,
         },
+
+        attachments: [
+            {
+                name: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                    maxlength: 200,
+                },
+
+                url: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                },
+
+                type: {
+                    type: String,
+                    required: true,
+                    enum: [
+                        "pdf",
+                        "doc",
+                        "docx",
+                        "png",
+                        "jpg",
+                        "jpeg",
+                    ],
+                },
+            },
+        ],
     },
     {
         timestamps: true,

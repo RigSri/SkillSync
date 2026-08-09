@@ -8,6 +8,7 @@ const adminMiddleware = require("../middleware/adminMiddleware");
 const {
     getUsers,
     getReports,
+    getFlaggedUsers,
     updateReportStatus,
     blockUser,
     unblockUser,
@@ -28,7 +29,10 @@ router.get(
     "/reports",
     getReports
 );
-
+router.get(
+    "/flagged-users",
+    getFlaggedUsers
+);
 router.patch(
     "/reports/:reportId",
     updateReportStatus
