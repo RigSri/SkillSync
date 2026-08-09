@@ -3,8 +3,71 @@ const mongoose = require("mongoose");
 const Session = require("../models/Session");
 const Match = require("../models/Match");
 const Skill = require("../models/Skill");
+const User = require("../models/User");
 
+const isWithinAvailability = (user, sessionDate, duration) => {
+    if (!user.availability || user.availability.length === 0) {
+        return false;
+    }
 
+    const timezone = user.timezone || "UTC";
+
+    let localParts;
+
+    try {
+        const formatter = new Intl.DateTimeFormat("en-US", {
+            timeZone: timezone,
+            weekday: "long",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        });
+
+        const parts = formatter.formatToParts(sessionDate);
+
+        const getPart = (type) =>
+            parts.find((part) => part.type === type)?.value;
+
+        localParts = {
+            day: getPart("weekday"),
+            hour: Number(getPart("hour")),
+            minute: Number(getPart("minute")),
+        };
+    } catch (error) {
+        return false;
+    }
+
+    const sessionStartMinutes =
+        localParts.hour * 60 + localParts.minute;
+
+    const sessionEndMinutes =
+        sessionStartMinutes + duration;
+
+    return user.availability.some((slot) => {
+        if (slot.day !== localParts.day) {
+            return false;
+        }
+
+        const [startHour, startMinute] = slot.startTime
+            .split(":")
+            .map(Number);
+
+        const [endHour, endMinute] = slot.endTime
+            .split(":")
+            .map(Number);
+
+        const availabilityStart =
+            startHour * 60 + startMinute;
+
+        const availabilityEnd =
+            endHour * 60 + endMinute;
+
+        return (
+            sessionStartMinutes >= availabilityStart &&
+            sessionEndMinutes <= availabilityEnd
+        );
+    });
+};
 // Create a new learning session
 const createSession = async (req, res) => {
     try {
@@ -112,7 +175,20 @@ const createSession = async (req, res) => {
                 message: "You are not part of this session.",
             });
         }
+        const teacher = await User.findById(teacherId).select(
+    "name availability timezone"
+);
 
+const learner = await User.findById(learnerId).select(
+    "name availability timezone"
+);
+
+if (!teacher || !learner) {
+    return res.status(404).json({
+        success: false,
+        message: "Teacher or learner not found.",
+    });
+}
         // Validate scheduled date
         const sessionDate = new Date(scheduledAt);
 
@@ -130,7 +206,40 @@ const createSession = async (req, res) => {
                 message: "Session must be scheduled for a future date.",
             });
         }
+const sessionDuration = duration || 60;
 
+if (sessionDuration <= 0) {
+    return res.status(400).json({
+        success: false,
+        message: "Session duration must be greater than 0.",
+    });
+}
+
+const teacherAvailable = isWithinAvailability(
+    teacher,
+    sessionDate,
+    sessionDuration
+);
+
+if (!teacherAvailable) {
+    return res.status(400).json({
+        success: false,
+        message: "The teacher is not available at the selected time.",
+    });
+}
+
+const learnerAvailable = isWithinAvailability(
+    learner,
+    sessionDate,
+    sessionDuration
+);
+
+if (!learnerAvailable) {
+    return res.status(400).json({
+        success: false,
+        message: "The learner is not available at the selected time.",
+    });
+}
         // Create session
         const session = await Session.create({
             match: matchId,
@@ -138,7 +247,7 @@ const createSession = async (req, res) => {
             teacher: teacherId,
             learner: learnerId,
             scheduledAt: sessionDate,
-            duration: duration || 60,
+            duration: sessionDuration,
             meetingLink: meetingLink || "",
         });
 

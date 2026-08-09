@@ -9,7 +9,9 @@ const learningRequestRoutes = require("./routes/learningRequestRoutes");
 const sessionRoutes = require("./routes/sessionRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const errorHandler = require("./middleware/errorMiddleware");
-
+const chatRoutes = require("./routes/chatRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const app = express();
 
 // Middlewares
@@ -24,6 +26,9 @@ app.use("/api/matches", matchRoutes);
 app.use("/api/learning-requests", learningRequestRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/admin", adminRoutes);
 // Health Check
 app.get("/", (req, res) => {
     res.status(200).json({
