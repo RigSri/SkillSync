@@ -27,26 +27,38 @@ function Skills() {
 
     const [saving, setSaving] = useState(false);
 
-    const loadSkills = async () => {
+    useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
         try {
             setError("");
 
             const result = await getMySkills();
 
+            if (cancelled) return;
+
             setSkills(result.data || []);
         } catch (error) {
+            if (cancelled) return;
+
             setError(
                 error.response?.data?.message ||
-                "Unable to load your skills."
+                    "Unable to load your skills."
             );
         } finally {
-            setLoading(false);
+            if (!cancelled) {
+                setLoading(false);
+            }
         }
     };
 
-    useEffect(() => {
-        loadSkills();
-    }, []);
+    load();
+
+    return () => {
+        cancelled = true;
+    };
+}, []);
 
     const resetForm = () => {
         setName("");
@@ -104,7 +116,8 @@ function Skills() {
                 await addSkill(skillData);
             }
 
-            await loadSkills();
+            const result = await getMySkills();
+            setSkills(result.data || []);
             resetForm();
         } catch (error) {
             setError(
