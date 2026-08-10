@@ -6,6 +6,7 @@ import Matches from "./pages/Matches";
 import Skills from "./pages/Skills";
 import Requests from "./pages/Requests";
 import Profile from "./pages/Profile";
+import Sessions from "./pages/Sessions";
 import NotFound from "./pages/NotFound";
 
 import MainLayout from "./layouts/MainLayout";
@@ -55,6 +56,11 @@ function App() {
                     <Route
                         path="/profile"
                         element={<Profile />}
+                    />
+
+                    <Route
+                        path="/sessions"
+                        element={<Sessions />}
                     />
 
                 </Route>

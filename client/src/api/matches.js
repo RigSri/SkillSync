@@ -5,3 +5,11 @@ export const getMatches = async () => {
 
     return response.data;
 };
+
+export const getMyMatches = async () => {
+    const response = await api.get(
+        "/matches/my-matches"
+    );
+
+    return response.data;
+};

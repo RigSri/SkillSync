@@ -1,5 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { FiUsers, FiBook, FiMail, FiUser, FiLogOut } from "react-icons/fi";
+import {
+    FiUsers,
+    FiBook,
+    FiMail,
+    FiCalendar,
+    FiUser,
+    FiLogOut,
+} from "react-icons/fi";
 
 const navigation = [
     {
@@ -18,6 +25,11 @@ const navigation = [
         icon: FiMail,
     },
     {
+        name: "Sessions",
+        path: "/sessions",
+        icon: FiCalendar,
+    },
+    {
         name: "Profile",
         path: "/profile",
         icon: FiUser,
@@ -26,17 +38,58 @@ const navigation = [
 
 function Sidebar() {
     return (
-        <aside className="w-60 bg-[#111827] text-white flex flex-col border-r border-slate-800">
+        <aside
+            className="
+                w-64
+                shrink-0
+                h-screen
+                bg-slate-950
+                text-white
+                flex
+                flex-col
+                border-r
+                border-slate-800
+            "
+        >
 
             {/* Logo */}
 
-            <div className="h-16 flex items-center px-6 border-b border-slate-800">
+            <div
+                className="
+                    h-16
+                    shrink-0
+                    flex
+                    items-center
+                    px-5
+                    border-b
+                    border-slate-800
+                "
+            >
 
-                <div className="w-9 h-9 rounded-lg bg-violet-600 flex items-center justify-center font-bold text-lg">
+                <div
+                    className="
+                        w-9
+                        h-9
+                        rounded-lg
+                        bg-violet-600
+                        flex
+                        items-center
+                        justify-center
+                        font-bold
+                        text-lg
+                    "
+                >
                     S
                 </div>
 
-                <span className="ml-3 text-2xl font-bold tracking-tight">
+                <span
+                    className="
+                        ml-3
+                        text-xl
+                        font-semibold
+                        tracking-tight
+                    "
+                >
                     SkillSync
                 </span>
 
@@ -44,63 +97,80 @@ function Sidebar() {
 
             {/* Navigation */}
 
-            <nav className="flex-1 mt-6 px-4">
+            <nav className="flex-1 px-3 py-5">
 
                 {navigation.map((item) => {
-
                     const Icon = item.icon;
 
                     return (
-
                         <NavLink
                             key={item.path}
                             to={item.path}
                             className={({ isActive }) =>
-                                `flex items-center gap-4 rounded-xl px-4 py-3 mb-2 transition-all duration-200
-
+                                `
+                                flex
+                                items-center
+                                gap-3
+                                rounded-lg
+                                px-3
+                                py-2.5
+                                mb-1
+                                text-sm
+                                font-medium
+                                transition
                                 ${
                                     isActive
-                                        ? "bg-violet-600 text-white shadow-md"
+                                        ? "bg-violet-600 text-white"
                                         : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                                }`
+                                }
+                                `
                             }
                         >
-                            <Icon size={20} />
+                            <Icon size={19} />
 
-                            <span className="text-base font-medium">
+                            <span>
                                 {item.name}
                             </span>
 
                         </NavLink>
-
                     );
-
                 })}
 
             </nav>
 
             {/* Logout */}
 
-            <div className="border-t border-slate-800 p-4">
+            <div
+                className="
+                    border-t
+                    border-slate-800
+                    p-3
+                "
+            >
 
                 <button
+                    type="button"
                     className="
                         w-full
                         flex
                         items-center
-                        gap-4
-                        rounded-xl
-                        px-4
-                        py-3
+                        gap-3
+                        rounded-lg
+                        px-3
+                        py-2.5
+                        text-sm
+                        font-medium
                         text-slate-300
                         hover:bg-red-600
                         hover:text-white
                         transition
                     "
                 >
-                    <FiLogOut size={20} />
+                    <FiLogOut size={19} />
 
-                    Logout
+                    <span>
+                        Logout
+                    </span>
 
                 </button>
 
