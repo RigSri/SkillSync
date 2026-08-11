@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 import {
     getCurrentUser,
     updateProfile,
     updateAvailability,
+    getUserProfile,
     getUserCredibility,
 } from "../../api/users";
 
@@ -14,6 +16,9 @@ import Card from "../../components/UI/Card";
 import Badge from "../../components/UI/Badge";
 
 function Profile() {
+        const { userId } = useParams();
+
+    const viewingOwnProfile = !userId;
     const [user, setUser] = useState(null);
     const [skills, setSkills] = useState([]);
 
@@ -48,86 +53,115 @@ const [availabilityForm, setAvailabilityForm] = useState({
     const load = async () => {
         try {
             setError("");
+            setLoading(true);
+            setReviewsLoading(true);
 
-            const [userResult, skillsResult] =
-                await Promise.all([
-                    getCurrentUser(),
-                    getMySkills(),
-                ]);
+            let userResult;
+            let skillsData = [];
+
+            if (viewingOwnProfile) {
+                const [currentUserResult, skillsResult] =
+                    await Promise.all([
+                        getCurrentUser(),
+                        getMySkills(),
+                    ]);
+
+                userResult = currentUserResult;
+                skillsData = skillsResult.data || [];
+            } else {
+                userResult = await getUserProfile(userId);
+                skillsData = userResult.data?.skills || [];
+            }
 
             if (cancelled) return;
 
-            setUser(userResult.data);
-            setSkills(skillsResult.data || []);
+            const profileUser = viewingOwnProfile
+                ? userResult.data
+                : userResult.data?.user;
+
+            if (!profileUser) {
+                throw new Error(
+                    "Unable to load user profile."
+                );
+            }
+
+            setUser(profileUser);
+            setSkills(skillsData);
             setAvailability(
-    userResult.data.availability || []
-);
-try {
-    const reviewsResult = await getUserReviews(
-        userResult.data._id || userResult.data.id
-    );
+                profileUser.availability || []
+            );
 
-    if (!cancelled) {
-        setReviews(reviewsResult.data || []);
-    }
-} catch (error) {
-    if (!cancelled) {
-        console.error(
-            "Unable to load reviews:",
-            error
-        );
-    }
-} finally {
-    if (!cancelled) {
-        setReviewsLoading(false);
-    }
-}
-try {
-    const credibilityResult =
-        await getUserCredibility(
-            userResult.data._id ||
-                userResult.data.id
-        );
-
-    if (!cancelled) {
-        setCredibility(
-            credibilityResult.data?.credibility ||
-                null
-        );
-
-        setBadges(
-            credibilityResult.data?.badges ||
-                null
-        );
-    }
-} catch (error) {
-    if (!cancelled) {
-        console.error(
-            "Unable to load credibility:",
-            error
-        );
-    }
-} finally {
-    if (!cancelled) {
-        setCredibilityLoading(false);
-    }
-}
             setForm({
-                name: userResult.data.name || "",
-                bio: userResult.data.bio || "",
-                city: userResult.data.city || "",
-                timezone: userResult.data.timezone || "",
+                name: profileUser.name || "",
+                bio: profileUser.bio || "",
+                city: profileUser.city || "",
+                timezone: profileUser.timezone || "",
             });
+
+            try {
+                const reviewsResult =
+                    await getUserReviews(
+                        profileUser._id ||
+                            profileUser.id
+                    );
+
+                if (!cancelled) {
+                    setReviews(
+                        reviewsResult.data || []
+                    );
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.error(
+                        "Unable to load reviews:",
+                        error
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setReviewsLoading(false);
+                }
+            }
+
+            try {
+                const credibilityResult =
+                    await getUserCredibility(
+                        profileUser._id ||
+                            profileUser.id
+                    );
+
+                if (!cancelled) {
+                    setCredibility(
+                        credibilityResult.data
+                            ?.credibility || null
+                    );
+
+                    setBadges(
+                        credibilityResult.data
+                            ?.badges || null
+                    );
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.error(
+                        "Unable to load credibility:",
+                        error
+                    );
+                }
+            }
         } catch (error) {
             if (cancelled) return;
 
             setError(
                 error.response?.data?.message ||
-                    "Unable to load your profile."
+                    error.message ||
+                    "Unable to load profile."
             );
         } finally {
             if (!cancelled) {
                 setLoading(false);
+                setReviewsLoading(false);
+                setCredibilityLoading(false);
             }
         }
     };
@@ -137,7 +171,7 @@ try {
     return () => {
         cancelled = true;
     };
-}, []);
+}, [userId, viewingOwnProfile]);
     const handleAvailabilityChange = (event) => {
     const { name, value } = event.target;
 
@@ -149,6 +183,8 @@ try {
 
 const handleAddAvailability = async (event) => {
     event.preventDefault();
+
+    if (!viewingOwnProfile) return;
 
     try {
         setError("");
@@ -178,6 +214,8 @@ const handleAddAvailability = async (event) => {
 };
 
 const handleDeleteAvailability = async (index) => {
+    if (!viewingOwnProfile) return;
+
     try {
         setError("");
 
@@ -209,6 +247,8 @@ const handleDeleteAvailability = async (index) => {
 
     const handleSave = async (event) => {
         event.preventDefault();
+
+        if (!viewingOwnProfile) return;
 
         try {
             setError("");
@@ -292,14 +332,11 @@ const handleDeleteAvailability = async (index) => {
 
                     </div>
 
-                    {!editing && (
-                        <Button
-                            variant="secondary"
-                            onClick={() => setEditing(true)}
-                        >
-                            Edit Profile
-                        </Button>
-                    )}
+                    {viewingOwnProfile && (
+    <Button onClick={() => setEditing(true)}>
+        Edit Profile
+    </Button>
+)}
 
                 </div>
             </Card>
@@ -929,19 +966,19 @@ const handleDeleteAvailability = async (index) => {
             </p>
         </div>
 
-        {!editingAvailability && (
-            <Button
-                variant="secondary"
-                onClick={() =>
-                    setEditingAvailability(true)
-                }
-            >
-                Add Time
-            </Button>
-        )}
+        {viewingOwnProfile && (
+    <Button
+        variant="secondary"
+        onClick={() =>
+            setEditingAvailability(true)
+        }
+    >
+        Edit Availability
+    </Button>
+)}
     </div>
 
-    {editingAvailability && (
+    {viewingOwnProfile && editingAvailability && (
         <form
             onSubmit={handleAddAvailability}
             className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200"
@@ -1053,14 +1090,16 @@ const handleDeleteAvailability = async (index) => {
                         </p>
                     </div>
 
-                    <Button
-                        variant="danger"
-                        onClick={() =>
-                            handleDeleteAvailability(index)
-                        }
-                    >
-                        Remove
-                    </Button>
+                    {viewingOwnProfile && (
+                        <Button
+                            variant="danger"
+                            onClick={() =>
+                                handleDeleteAvailability(index)
+                            }
+                        >
+                            Remove
+                        </Button>
+                    )}
                 </div>
             ))}
 

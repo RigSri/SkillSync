@@ -12,6 +12,9 @@ const errorHandler = require("./middleware/errorMiddleware");
 const chatRoutes = require("./routes/chatRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const notificationRoutes = require(
+    "./routes/notificationRoutes"
+);
 const app = express();
 
 // Middlewares
@@ -32,7 +35,10 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/admin", adminRoutes);
-
+app.use(
+    "/api/notifications",
+    notificationRoutes
+);
 // Health Check
 app.get("/", (req, res) => {
     res.status(200).json({

@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+
 import {
     FiUsers,
     FiBook,
@@ -26,9 +27,9 @@ const navigation = [
         icon: FiMail,
     },
     {
-    name: "Chat",
-    path: "/chat",
-    icon: FiMessageCircle,
+        name: "Chat",
+        path: "/chat",
+        icon: FiMessageCircle,
     },
     {
         name: "Sessions",
@@ -42,11 +43,22 @@ const navigation = [
     },
 ];
 
-function Sidebar() {
+function Sidebar({ collapsed }) {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        navigate("/", {
+            replace: true,
+        });
+    };
+
     return (
         <aside
-            className="
-                w-64
+            className={`
+                ${collapsed ? "w-20" : "w-64"}
                 shrink-0
                 h-screen
                 bg-slate-950
@@ -55,27 +67,30 @@ function Sidebar() {
                 flex-col
                 border-r
                 border-slate-800
-            "
+                transition-all
+                duration-200
+            `}
         >
 
             {/* Logo */}
 
             <div
-                className="
+                className={`
                     h-16
                     shrink-0
                     flex
                     items-center
-                    px-5
+                    ${collapsed ? "justify-center" : "px-5"}
                     border-b
                     border-slate-800
-                "
+                `}
             >
 
                 <div
                     className="
                         w-9
                         h-9
+                        shrink-0
                         rounded-lg
                         bg-violet-600
                         flex
@@ -88,16 +103,18 @@ function Sidebar() {
                     S
                 </div>
 
-                <span
-                    className="
-                        ml-3
-                        text-xl
-                        font-semibold
-                        tracking-tight
-                    "
-                >
-                    SkillSync
-                </span>
+                {!collapsed && (
+                    <span
+                        className="
+                            ml-3
+                            text-xl
+                            font-semibold
+                            tracking-tight
+                        "
+                    >
+                        SkillSync
+                    </span>
+                )}
 
             </div>
 
@@ -112,11 +129,20 @@ function Sidebar() {
                         <NavLink
                             key={item.path}
                             to={item.path}
+                            title={
+                                collapsed
+                                    ? item.name
+                                    : undefined
+                            }
                             className={({ isActive }) =>
                                 `
                                 flex
                                 items-center
-                                gap-3
+                                ${
+                                    collapsed
+                                        ? "justify-center"
+                                        : "gap-3"
+                                }
                                 rounded-lg
                                 px-3
                                 py-2.5
@@ -134,9 +160,11 @@ function Sidebar() {
                         >
                             <Icon size={19} />
 
-                            <span>
-                                {item.name}
-                            </span>
+                            {!collapsed && (
+                                <span>
+                                    {item.name}
+                                </span>
+                            )}
 
                         </NavLink>
                     );
@@ -156,11 +184,21 @@ function Sidebar() {
 
                 <button
                     type="button"
-                    className="
+                    title={
+                        collapsed
+                            ? "Logout"
+                            : undefined
+                    }
+                    onClick={handleLogout}
+                    className={`
                         w-full
                         flex
                         items-center
-                        gap-3
+                        ${
+                            collapsed
+                                ? "justify-center"
+                                : "gap-3"
+                        }
                         rounded-lg
                         px-3
                         py-2.5
@@ -170,13 +208,15 @@ function Sidebar() {
                         hover:bg-red-600
                         hover:text-white
                         transition
-                    "
+                    `}
                 >
                     <FiLogOut size={19} />
 
-                    <span>
-                        Logout
-                    </span>
+                    {!collapsed && (
+                        <span>
+                            Logout
+                        </span>
+                    )}
 
                 </button>
 

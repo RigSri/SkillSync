@@ -30,3 +30,40 @@ export const getUserCredibility = async (userId) => {
 
     return response.data;
 };
+
+export const getUserProfile = async (userId) => {
+    const response = await api.get(
+        `/users/${userId}/profile`
+    );
+
+    return response.data;
+};
+export const searchUsers = async (query) => {
+    const response = await api.get(
+        `/users/search?q=${encodeURIComponent(query)}`
+    );
+
+    return response.data;
+};
+export const searchSkillPartners = async ({
+    q,
+    mode = "learn",
+    level = "",
+    peerRated = false,
+    verifiedTeacher = false,
+}) => {
+    const response = await api.get(
+        "/users/skill-search",
+        {
+            params: {
+                q,
+                mode,
+                level,
+                peerRated,
+                verifiedTeacher,
+            },
+        }
+    );
+
+    return response.data;
+};

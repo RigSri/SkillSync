@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { FiArrowRight, FiCheck, FiUsers } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import {
+    FiArrowRight,
+    FiCheck,
+    FiUsers,
+} from "react-icons/fi";
 
 import { getMatches } from "../../api/matches";
 
@@ -13,7 +18,7 @@ function UserInitial({ name }) {
 
 function MatchCard({ user, type }) {
     const isPerfect = type === "perfect";
-
+    const navigate = useNavigate();
     return (
         <div className="bg-white border border-slate-200 rounded-xl p-5">
             <div className="flex items-start justify-between gap-6">
@@ -33,21 +38,25 @@ function MatchCard({ user, type }) {
                 </div>
 
                 <button
-                    className="
-                        shrink-0
-                        flex
-                        items-center
-                        gap-2
-                        text-sm
-                        font-medium
-                        text-violet-600
-                        hover:text-violet-700
-                        transition
-                    "
-                >
-                    View profile
-                    <FiArrowRight size={16} />
-                </button>
+    type="button"
+    onClick={() =>
+        navigate(`/profile/${user.userId}`)
+    }
+    className="
+        shrink-0
+        flex
+        items-center
+        gap-2
+        text-sm
+        font-medium
+        text-violet-600
+        hover:text-violet-700
+        transition
+    "
+>
+    View profile
+    <FiArrowRight size={16} />
+</button>
 
             </div>
 

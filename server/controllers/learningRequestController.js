@@ -4,6 +4,7 @@ const LearningRequest = require("../models/LearningRequest");
 const User = require("../models/User");
 const Skill = require("../models/Skill");
 const Match = require("../models/Match");
+const Notification = require("../models/Notification");
 const populateRequest = (query) => {
     return query
         .populate("sender", "name email profilePicture bio city timezone")
@@ -144,7 +145,22 @@ const sendLearningRequest = async (req, res) => {
             requestType,
             message,
         });
+        const sender = await User.findById(req.user.id).select(
+    "name"
+);
 
+await Notification.create({
+    recipient: receiverId,
+    sender: req.user.id,
+    type: "learning_request",
+    title: "New learning request",
+    message:
+        requestType === "learn"
+            ? `${sender.name} wants to learn ${skill.name} from you.`
+            : `${sender.name} wants to teach you ${skill.name}.`,
+    link: "/requests",
+    relatedId: request._id,
+});
         // Return populated request
         const populatedRequest = await populateRequest(
             LearningRequest.findById(request._id)
