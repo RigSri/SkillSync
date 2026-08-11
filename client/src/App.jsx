@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import Admin from "./pages/Admin";
+import AdminRoute from "./components/common/AdminRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Matches from "./pages/Matches";
@@ -38,7 +39,14 @@ function App() {
                         </ProtectedRoute>
                     }
                 >
-
+                    <Route
+                    path="/admin"
+                    element={
+                    <AdminRoute>
+                    <Admin />
+                    </AdminRoute>
+                    }
+                />
                     <Route
                         path="/matches"
                         element={<Matches />}

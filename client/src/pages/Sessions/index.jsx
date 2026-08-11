@@ -11,6 +11,7 @@ import {
 } from "../../api/sessions";
 
 import { getMyMatches } from "../../api/matches";
+import { createReview, getMyReviews } from "../../api/reviews";
 
 import Card from "../../components/UI/Card";
 import Badge from "../../components/UI/Badge";
@@ -40,7 +41,13 @@ function Sessions() {
     const [selectedSession, setSelectedSession] = useState(null);
 const [detailsLoading, setDetailsLoading] = useState(false);
 const [detailsError, setDetailsError] = useState("");
+const [myReviews, setMyReviews] = useState([]);
 
+const [reviewRating, setReviewRating] = useState(0);
+const [reviewComment, setReviewComment] = useState("");
+const [reviewLoading, setReviewLoading] = useState(false);
+const [reviewError, setReviewError] = useState("");
+const [reviewSuccess, setReviewSuccess] = useState("");
 const [sessionActionLoading, setSessionActionLoading] =
     useState(false);
 
@@ -64,9 +71,11 @@ const [newMilestone, setNewMilestone] = useState("");
                 const [
                     sessionsResult,
                     matchesResult,
+                    reviewsResult,
                 ] = await Promise.all([
                     getMySessions(),
                     getMyMatches(),
+                    getMyReviews(),
                 ]);
 
                 if (cancelled) return;
@@ -77,6 +86,10 @@ const [newMilestone, setNewMilestone] = useState("");
 
                 setMyMatches(
                     matchesResult.data || []
+                );
+
+                setMyReviews(
+                    reviewsResult.data || []
                 );
             } catch (error) {
                 if (cancelled) return;
@@ -259,6 +272,48 @@ const closeSessionDetails = () => {
     setProgressPercentage(0);
     setMilestones([]);
     setNewMilestone("");
+
+    setReviewRating(0);
+    setReviewComment("");
+    setReviewError("");
+    setReviewSuccess("");
+};
+
+const handleSubmitReview = async () => {
+    if (!selectedSession) return;
+
+    if (reviewRating < 1 || reviewRating > 5) {
+        setReviewError("Please select a rating from 1 to 5.");
+        return;
+    }
+
+    try {
+        setReviewLoading(true);
+        setReviewError("");
+        setReviewSuccess("");
+
+        const result = await createReview({
+            sessionId: selectedSession._id,
+            rating: Number(reviewRating),
+            comment: reviewComment.trim(),
+        });
+
+        setMyReviews((current) => [
+            result.data,
+            ...current,
+        ]);
+
+        setReviewRating(0);
+        setReviewComment("");
+        setReviewSuccess("Review submitted successfully.");
+    } catch (error) {
+        setReviewError(
+            error.response?.data?.message ||
+                "Unable to submit review."
+        );
+    } finally {
+        setReviewLoading(false);
+    }
 };
 
 const handleCompleteSession = async () => {
@@ -1845,6 +1900,106 @@ const removeMilestone = (index) => {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Review */}
+
+                                    {selectedSession.status === "completed" && (
+                                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                                            <h3 className="text-base font-semibold text-slate-900">
+                                                Session Review
+                                            </h3>
+                                            <p className="mt-1 text-sm text-slate-500">
+                                                Rate your experience and share your feedback.
+                                            </p>
+
+                                            {myReviews.some(
+                                                (review) =>
+                                                    String(review.session?._id || review.sessionId) ===
+                                                    String(selectedSession._id)
+                                            ) ? (
+                                                <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                                                    <p className="text-sm font-medium text-green-700">
+                                                        You have already reviewed this session.
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="mt-4">
+                                                        <p className="text-sm font-medium text-slate-700">
+                                                            Rating
+                                                        </p>
+                                                        <div className="mt-2 flex gap-1">
+                                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                                <button
+                                                                    key={star}
+                                                                    type="button"
+                                                                    onClick={() => setReviewRating(star)}
+                                                                    className={`text-2xl leading-none ${
+                                                                        star <= reviewRating
+                                                                            ? "text-yellow-400"
+                                                                            : "text-slate-300"
+                                                                    } hover:text-yellow-400`}
+                                                                    aria-label={`Rate ${star} out of 5`}
+                                                                >
+                                                                    ★
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-4">
+                                                        <label
+                                                            htmlFor="session-review-comment"
+                                                            className="text-sm font-medium text-slate-700"
+                                                        >
+                                                            Comment
+                                                        </label>
+                                                        <textarea
+                                                            id="session-review-comment"
+                                                            value={reviewComment}
+                                                            onChange={(event) =>
+                                                                setReviewComment(event.target.value)
+                                                            }
+                                                            rows={4}
+                                                            maxLength={500}
+                                                            placeholder="Share your experience..."
+                                                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                                        />
+                                                        <p className="mt-1 text-right text-xs text-slate-400">
+                                                            {reviewComment.length}/500
+                                                        </p>
+                                                    </div>
+
+                                                    {reviewError && (
+                                                        <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                                                            <p className="text-sm text-red-700">
+                                                                {reviewError}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {reviewSuccess && (
+                                                        <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                                                            <p className="text-sm text-green-700">
+                                                                {reviewSuccess}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="mt-4">
+                                                        <Button
+                                                            onClick={handleSubmitReview}
+                                                            disabled={reviewLoading || reviewRating === 0}
+                                                        >
+                                                            {reviewLoading
+                                                                ? "Submitting..."
+                                                                : "Submit Review"}
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Actions */}
 

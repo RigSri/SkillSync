@@ -4,6 +4,7 @@ import {
     getCurrentUser,
     updateProfile,
     updateAvailability,
+    getUserCredibility,
 } from "../../api/users";
 
 import { getMySkills } from "../../api/skills";
@@ -20,7 +21,10 @@ function Profile() {
 const [error, setError] = useState("");
 const [reviews, setReviews] = useState([]);
 const [reviewsLoading, setReviewsLoading] = useState(true);
-
+const [credibility, setCredibility] = useState(null);
+const [badges, setBadges] = useState(null);
+const [credibilityLoading, setCredibilityLoading] =
+    useState(true);
     const [editing, setEditing] = useState(false);
     const [availability, setAvailability] = useState([]);
 const [editingAvailability, setEditingAvailability] =
@@ -76,6 +80,36 @@ try {
 } finally {
     if (!cancelled) {
         setReviewsLoading(false);
+    }
+}
+try {
+    const credibilityResult =
+        await getUserCredibility(
+            userResult.data._id ||
+                userResult.data.id
+        );
+
+    if (!cancelled) {
+        setCredibility(
+            credibilityResult.data?.credibility ||
+                null
+        );
+
+        setBadges(
+            credibilityResult.data?.badges ||
+                null
+        );
+    }
+} catch (error) {
+    if (!cancelled) {
+        console.error(
+            "Unable to load credibility:",
+            error
+        );
+    }
+} finally {
+    if (!cancelled) {
+        setCredibilityLoading(false);
     }
 }
             setForm({
@@ -569,6 +603,178 @@ const handleDeleteAvailability = async (index) => {
                 </div>
 
             </Card>
+                        {/* Credibility */}
+
+<Card>
+
+    <div className="mb-6">
+
+        <h2 className="text-lg font-semibold text-slate-900">
+            Credibility & Badges
+        </h2>
+
+        <p className="text-sm text-slate-500 mt-1">
+            Your reputation and achievements on SkillSync.
+        </p>
+
+    </div>
+
+    {credibilityLoading ? (
+
+        <p className="text-sm text-slate-400">
+            Loading credibility...
+        </p>
+
+    ) : !credibility ? (
+
+        <p className="text-sm text-slate-400">
+            Credibility information is not available yet.
+        </p>
+
+    ) : (
+
+        <div className="space-y-6">
+
+            {/* Stats */}
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Rating
+                    </p>
+
+                    <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        {credibility.averageRating || "—"}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                        out of 5
+                    </p>
+                </div>
+
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Reviews
+                    </p>
+
+                    <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        {credibility.reviewCount}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                        received
+                    </p>
+                </div>
+
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Sessions
+                    </p>
+
+                    <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        {credibility.completedSessions}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                        completed
+                    </p>
+                </div>
+
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Teaching
+                    </p>
+
+                    <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        {credibility.completedTeachingSessions}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                        sessions taught
+                    </p>
+                </div>
+
+            </div>
+
+            {/* Rating */}
+
+            {credibility.reviewCount > 0 && (
+                <div className="flex items-center gap-3">
+
+                    <div className="flex items-center gap-1 text-lg">
+
+                        {[1, 2, 3, 4, 5].map(
+                            (star) => (
+                                <span
+                                    key={star}
+                                    className={
+                                        star <=
+                                        Math.round(
+                                            credibility.averageRating
+                                        )
+                                            ? "text-yellow-500"
+                                            : "text-slate-300"
+                                    }
+                                >
+                                    ★
+                                </span>
+                            )
+                        )}
+
+                    </div>
+
+                    <p className="text-sm text-slate-500">
+                        {credibility.averageRating}/5 based on{" "}
+                        {credibility.reviewCount}{" "}
+                        {credibility.reviewCount === 1
+                            ? "review"
+                            : "reviews"}
+                    </p>
+
+                </div>
+            )}
+
+            {/* Badges */}
+
+            <div>
+
+                <h3 className="text-sm font-medium text-slate-700 mb-3">
+                    Badges
+                </h3>
+
+                <div className="flex flex-wrap gap-3">
+
+                    {badges?.peerRated && (
+                        <Badge variant="success">
+                            Peer Rated
+                        </Badge>
+                    )}
+
+                    {badges?.verifiedTeacher && (
+                        <Badge>
+                            Verified Teacher
+                        </Badge>
+                    )}
+
+                    {!badges?.peerRated &&
+                        !badges?.verifiedTeacher && (
+                            <p className="text-sm text-slate-400">
+                                Keep completing sessions and
+                                receiving positive reviews to
+                                unlock badges.
+                            </p>
+                        )}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    )}
+
+</Card>
                         {/* Reviews */}
 
             <Card>
