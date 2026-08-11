@@ -221,23 +221,34 @@ const teacherAvailable = isWithinAvailability(
     sessionDuration
 );
 
-if (!teacherAvailable) {
-    return res.status(400).json({
-        success: false,
-        message: "The teacher is not available at the selected time.",
-    });
-}
-
 const learnerAvailable = isWithinAvailability(
     learner,
     sessionDate,
     sessionDuration
 );
 
-if (!learnerAvailable) {
+if (!teacherAvailable || !learnerAvailable) {
+    const currentUserIsTeacher =
+        teacher._id.toString() === req.user.id;
+
+    let message;
+
+    if (!teacherAvailable && !learnerAvailable) {
+        message =
+            "Neither participant is available at the selected time.";
+    } else if (!teacherAvailable) {
+        message = currentUserIsTeacher
+            ? "You are not available at the selected time."
+            : "The teacher is not available at the selected time.";
+    } else {
+        message = currentUserIsTeacher
+            ? "The learner is not available at the selected time."
+            : "You are not available at the selected time.";
+    }
+
     return res.status(400).json({
         success: false,
-        message: "The learner is not available at the selected time.",
+        message,
     });
 }
         // Create session

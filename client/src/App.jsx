@@ -7,6 +7,7 @@ import Skills from "./pages/Skills";
 import Requests from "./pages/Requests";
 import Profile from "./pages/Profile";
 import Sessions from "./pages/Sessions";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 import MainLayout from "./layouts/MainLayout";
@@ -58,6 +59,10 @@ function App() {
                         element={<Profile />}
                     />
 
+                    <Route
+                        path="/chat"
+                        element={<Chat />}
+                    />
                     <Route
                         path="/sessions"
                         element={<Sessions />}

@@ -3,6 +3,7 @@ import {
     FiUsers,
     FiBook,
     FiMail,
+    FiMessageCircle,
     FiCalendar,
     FiUser,
     FiLogOut,
@@ -23,6 +24,11 @@ const navigation = [
         name: "Requests",
         path: "/requests",
         icon: FiMail,
+    },
+    {
+    name: "Chat",
+    path: "/chat",
+    icon: FiMessageCircle,
     },
     {
         name: "Sessions",

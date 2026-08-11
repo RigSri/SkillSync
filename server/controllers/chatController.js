@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
+const path = require("path");
+const fs = require("fs");
 
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Match = require("../models/Match");
 
+const uploadDir = path.join(__dirname, "../uploads");
 
 // Create or get conversation for an active match
 const getOrCreateConversation = async (req, res) => {
@@ -79,8 +82,113 @@ const getOrCreateConversation = async (req, res) => {
         });
     }
 };
+// Upload a chat attachment
+const uploadAttachment = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "No file was uploaded.",
+            });
+        }
 
+        const extension = path
+            .extname(req.file.originalname)
+            .slice(1)
+            .toLowerCase();
 
+        return res.status(201).json({
+            success: true,
+            message: "File uploaded successfully.",
+            data: {
+                name: req.file.originalname,
+                url: `/api/chat/files/${req.file.filename}`,
+                type: extension,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to upload file.",
+        });
+    }
+};
+// Download a chat attachment
+const downloadAttachment = async (req, res) => {
+    try {
+        const filename = path.basename(req.params.filename);
+
+        const fileUrl = `/api/chat/files/${filename}`;
+
+        const message = await Message.findOne({
+            "attachments.url": fileUrl,
+        });
+
+        if (!message) {
+            return res.status(404).json({
+                success: false,
+                message: "Attachment not found.",
+            });
+        }
+
+        const conversation = await Conversation.findById(
+            message.conversation
+        );
+
+        if (!conversation) {
+            return res.status(404).json({
+                success: false,
+                message: "Conversation not found.",
+            });
+        }
+
+        const isParticipant = conversation.participants.some(
+            (userId) => userId.toString() === req.user.id
+        );
+
+        if (!isParticipant) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "You are not allowed to access this attachment.",
+            });
+        }
+
+        const attachment = message.attachments.find(
+            (item) => item.url === fileUrl
+        );
+
+        if (!attachment) {
+            return res.status(404).json({
+                success: false,
+                message: "Attachment not found.",
+            });
+        }
+
+        const filePath = path.join(uploadDir, filename);
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({
+                success: false,
+                message: "File no longer exists on the server.",
+            });
+        }
+
+        return res.download(
+            filePath,
+            attachment.name
+        );
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to download attachment.",
+        });
+    }
+};
 // Send a message with optional attachments
 const sendMessage = async (req, res) => {
     try {
@@ -311,4 +419,6 @@ module.exports = {
     sendMessage,
     getMessages,
     getMyConversations,
+    uploadAttachment,
+    downloadAttachment,
 };

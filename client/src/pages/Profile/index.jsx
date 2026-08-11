@@ -7,7 +7,7 @@ import {
 } from "../../api/users";
 
 import { getMySkills } from "../../api/skills";
-
+import { getUserReviews } from "../../api/reviews";
 import Button from "../../components/UI/Button";
 import Card from "../../components/UI/Card";
 import Badge from "../../components/UI/Badge";
@@ -17,7 +17,9 @@ function Profile() {
     const [skills, setSkills] = useState([]);
 
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+const [error, setError] = useState("");
+const [reviews, setReviews] = useState([]);
+const [reviewsLoading, setReviewsLoading] = useState(true);
 
     const [editing, setEditing] = useState(false);
     const [availability, setAvailability] = useState([]);
@@ -56,6 +58,26 @@ const [availabilityForm, setAvailabilityForm] = useState({
             setAvailability(
     userResult.data.availability || []
 );
+try {
+    const reviewsResult = await getUserReviews(
+        userResult.data._id || userResult.data.id
+    );
+
+    if (!cancelled) {
+        setReviews(reviewsResult.data || []);
+    }
+} catch (error) {
+    if (!cancelled) {
+        console.error(
+            "Unable to load reviews:",
+            error
+        );
+    }
+} finally {
+    if (!cancelled) {
+        setReviewsLoading(false);
+    }
+}
             setForm({
                 name: userResult.data.name || "",
                 bio: userResult.data.bio || "",
@@ -545,6 +567,147 @@ const handleDeleteAvailability = async (index) => {
                     </div>
 
                 </div>
+
+            </Card>
+                        {/* Reviews */}
+
+            <Card>
+
+                <div className="flex items-center justify-between mb-6">
+
+                    <div>
+                        <h2 className="text-lg font-semibold text-slate-900">
+                            Reviews
+                        </h2>
+
+                        <p className="text-sm text-slate-500 mt-1">
+                            What your learning partners say about you
+                        </p>
+                    </div>
+
+                    {!reviewsLoading && reviews.length > 0 && (
+                        <Badge>
+                            {reviews.length}{" "}
+                            {reviews.length === 1
+                                ? "Review"
+                                : "Reviews"}
+                        </Badge>
+                    )}
+
+                </div>
+
+                {reviewsLoading ? (
+
+                    <p className="text-sm text-slate-400">
+                        Loading reviews...
+                    </p>
+
+                ) : reviews.length === 0 ? (
+
+                    <p className="text-sm text-slate-400">
+                        You haven't received any reviews yet.
+                    </p>
+
+                ) : (
+
+                    <div className="space-y-5">
+
+                        {reviews.map((review) => (
+
+                            <div
+                                key={review._id}
+                                className="
+                                    border-b
+                                    border-slate-100
+                                    pb-5
+                                    last:border-b-0
+                                    last:pb-0
+                                "
+                            >
+
+                                <div className="flex items-start justify-between">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div
+                                            className="
+                                                w-10
+                                                h-10
+                                                rounded-full
+                                                bg-violet-100
+                                                text-violet-700
+                                                flex
+                                                items-center
+                                                justify-center
+                                                font-semibold
+                                            "
+                                        >
+                                            {review.reviewer?.name
+                                                ?.charAt(0)
+                                                .toUpperCase()}
+                                        </div>
+
+                                        <div>
+
+                                            <p className="font-medium text-slate-900">
+                                                {review.reviewer?.name ||
+                                                    "User"}
+                                            </p>
+
+                                            <p className="text-xs text-slate-400">
+                                                {review.createdAt
+                                                    ? new Date(
+                                                        review.createdAt
+                                                    ).toLocaleDateString()
+                                                    : ""}
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+
+                                        {[1, 2, 3, 4, 5].map(
+                                            (star) => (
+                                                <span
+                                                    key={star}
+                                                    className={
+                                                        star <=
+                                                        review.rating
+                                                            ? "text-yellow-500"
+                                                            : "text-slate-300"
+                                                    }
+                                                >
+                                                    ★
+                                                </span>
+                                            )
+                                        )}
+
+                                    </div>
+
+                                </div>
+
+                                {review.comment && (
+                                    <p className="mt-3 text-sm text-slate-600">
+                                        "{review.comment}"
+                                    </p>
+                                )}
+
+                                {review.session?.skill?.name && (
+                                    <p className="mt-2 text-xs text-slate-400">
+                                        Session:{" "}
+                                        {review.session.skill.name}
+                                    </p>
+                                )}
+
+                            </div>
+
+                        ))}
+
+                    </div>
+
+                )}
 
             </Card>
 <Card>

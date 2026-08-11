@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+const path = require("path");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const skillRoutes = require("./routes/skillRoutes");
@@ -17,7 +17,10 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-
+app.use(
+    "/uploads",
+    express.static(path.join(__dirname, "uploads"))
+);
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -29,6 +32,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/admin", adminRoutes);
+
 // Health Check
 app.get("/", (req, res) => {
     res.status(200).json({
