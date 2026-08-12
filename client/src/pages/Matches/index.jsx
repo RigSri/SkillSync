@@ -4,9 +4,13 @@ import {
     FiArrowRight,
     FiCheck,
     FiUsers,
+    FiSend,
 } from "react-icons/fi";
 
 import { getMatches } from "../../api/matches";
+import {
+    sendLearningRequest,
+} from "../../api/learningRequests";
 
 function UserInitial({ name }) {
     return (
@@ -16,17 +20,91 @@ function UserInitial({ name }) {
     );
 }
 
-function MatchCard({ user, type }) {
+function SkillBadge({ skill }) {
+    return (
+        <span
+            className="
+                px-3
+                py-1
+                rounded-md
+                bg-slate-100
+                text-slate-700
+                text-sm
+            "
+        >
+            {skill.name}
+
+            {skill.level && (
+                <span className="ml-2 text-xs text-slate-400">
+                    {skill.level}
+                </span>
+            )}
+        </span>
+    );
+}
+
+function MatchCard({ user, type, onRequestSent }) {
     const isPerfect = type === "perfect";
     const navigate = useNavigate();
+
+    const [sendingSkillId, setSendingSkillId] =
+        useState(null);
+
+    const [message, setMessage] =
+        useState("");
+
+    const [error, setError] =
+        useState("");
+
+    const handleSendRequest = async (
+        skill,
+        requestType
+    ) => {
+        try {
+            setSendingSkillId(skill.id);
+            setMessage("");
+            setError("");
+
+            await sendLearningRequest({
+                receiverId: user.userId,
+                skillId: skill.id,
+                requestType,
+            });
+
+            setMessage(
+                requestType === "learn"
+                    ? `Learning request sent for ${skill.name}.`
+                    : `Teaching request sent for ${skill.name}.`
+            );
+
+            if (onRequestSent) {
+                onRequestSent();
+            }
+        } catch (error) {
+            console.error(
+                "Unable to send learning request:",
+                error
+            );
+
+            setError(
+                error.response?.data?.message ||
+                    "Unable to send request."
+            );
+        } finally {
+            setSendingSkillId(null);
+        }
+    };
+
     return (
         <div className="bg-white border border-slate-200 rounded-xl p-5">
             <div className="flex items-start justify-between gap-6">
 
+                {/* User */}
+
                 <div className="flex items-center gap-4 min-w-0">
                     <UserInitial name={user.name} />
 
-                    <div>
+                    <div className="min-w-0">
                         <h3 className="text-base font-semibold text-slate-900">
                             {user.name}
                         </h3>
@@ -37,28 +115,33 @@ function MatchCard({ user, type }) {
                     </div>
                 </div>
 
-                <button
-    type="button"
-    onClick={() =>
-        navigate(`/profile/${user.userId}`)
-    }
-    className="
-        shrink-0
-        flex
-        items-center
-        gap-2
-        text-sm
-        font-medium
-        text-violet-600
-        hover:text-violet-700
-        transition
-    "
->
-    View profile
-    <FiArrowRight size={16} />
-</button>
+                {/* View Profile */}
 
+                <button
+                    type="button"
+                    onClick={() =>
+                        navigate(
+                            `/profile/${user.userId}`
+                        )
+                    }
+                    className="
+                        shrink-0
+                        flex
+                        items-center
+                        gap-2
+                        text-sm
+                        font-medium
+                        text-violet-600
+                        hover:text-violet-700
+                        transition
+                    "
+                >
+                    View profile
+                    <FiArrowRight size={16} />
+                </button>
             </div>
+
+            {/* Perfect Match */}
 
             {isPerfect ? (
                 <div className="mt-5 pt-5 border-t border-slate-100">
@@ -74,31 +157,9 @@ function MatchCard({ user, type }) {
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                        <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">
-                                You teach
-                            </p>
-
-                            <div className="flex flex-wrap gap-2">
-                                {user.matchedTeach.map((skill) => (
-                                    <span
-                                        key={skill}
-                                        className="
-                                            px-3
-                                            py-1
-                                            rounded-md
-                                            bg-violet-50
-                                            text-violet-700
-                                            text-sm
-                                        "
-                                    >
-                                        {skill}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
+                        {/* They can teach you */}
 
                         <div>
                             <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">
@@ -106,25 +167,140 @@ function MatchCard({ user, type }) {
                             </p>
 
                             <div className="flex flex-wrap gap-2">
-                                {user.matchedLearn.map((skill) => (
-                                    <span
-                                        key={skill}
-                                        className="
-                                            px-3
-                                            py-1
-                                            rounded-md
-                                            bg-slate-100
-                                            text-slate-700
-                                            text-sm
-                                        "
-                                    >
-                                        {skill}
-                                    </span>
-                                ))}
+                                {user.matchedLearn.map(
+                                    (skill) => (
+                                        <SkillBadge
+                                            key={skill.id}
+                                            skill={skill}
+                                        />
+                                    )
+                                )}
+                            </div>
+
+                            <div className="mt-3 space-y-2">
+                                {user.matchedLearn.map(
+                                    (skill) => (
+                                        <button
+                                            key={skill.id}
+                                            type="button"
+                                            disabled={
+                                                sendingSkillId ===
+                                                skill.id
+                                            }
+                                            onClick={() =>
+                                                handleSendRequest(
+                                                    skill,
+                                                    "learn"
+                                                )
+                                            }
+                                            className="
+                                                w-full
+                                                flex
+                                                items-center
+                                                justify-center
+                                                gap-2
+                                                rounded-lg
+                                                bg-violet-600
+                                                px-3
+                                                py-2
+                                                text-sm
+                                                font-medium
+                                                text-white
+                                                hover:bg-violet-700
+                                                disabled:opacity-50
+                                                disabled:cursor-not-allowed
+                                                transition
+                                            "
+                                        >
+                                            <FiSend size={15} />
+
+                                            {sendingSkillId ===
+                                            skill.id
+                                                ? "Sending..."
+                                                : `Learn ${skill.name}`}
+                                        </button>
+                                    )
+                                )}
                             </div>
                         </div>
 
+                        {/* They want to learn from you */}
+
+                        <div>
+                            <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+                                They want to learn
+                            </p>
+
+                            <div className="flex flex-wrap gap-2">
+                                {user.matchedTeach.map(
+                                    (skill) => (
+                                        <SkillBadge
+                                            key={skill.id}
+                                            skill={skill}
+                                        />
+                                    )
+                                )}
+                            </div>
+
+                            <div className="mt-3 space-y-2">
+                                {user.matchedTeach.map(
+                                    (skill) => (
+                                        <button
+                                            key={skill.id}
+                                            type="button"
+                                            disabled={
+                                                sendingSkillId ===
+                                                skill.id
+                                            }
+                                            onClick={() =>
+                                                handleSendRequest(
+                                                    skill,
+                                                    "teach"
+                                                )
+                                            }
+                                            className="
+                                                w-full
+                                                flex
+                                                items-center
+                                                justify-center
+                                                gap-2
+                                                rounded-lg
+                                                bg-slate-900
+                                                px-3
+                                                py-2
+                                                text-sm
+                                                font-medium
+                                                text-white
+                                                hover:bg-slate-800
+                                                disabled:opacity-50
+                                                disabled:cursor-not-allowed
+                                                transition
+                                            "
+                                        >
+                                            <FiSend size={15} />
+
+                                            {sendingSkillId ===
+                                            skill.id
+                                                ? "Sending..."
+                                                : `Teach ${skill.name}`}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        </div>
                     </div>
+
+                    {message && (
+                        <div className="mt-4 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
+                            {message}
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                            {error}
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="mt-5 pt-5 border-t border-slate-100">
@@ -135,31 +311,89 @@ function MatchCard({ user, type }) {
                             : "Wants to learn from you"}
                     </p>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-3">
                         {user.skills.map((skill) => (
-                            <span
-                                key={skill}
+                            <div
+                                key={skill.id}
                                 className="
-                                    px-3
-                                    py-1
-                                    rounded-md
-                                    bg-slate-100
-                                    text-slate-700
-                                    text-sm
+                                    flex
+                                    flex-col
+                                    sm:flex-row
+                                    sm:items-center
+                                    sm:justify-between
+                                    gap-3
                                 "
                             >
-                                {skill}
-                            </span>
+                                <SkillBadge skill={skill} />
+
+                                <button
+                                    type="button"
+                                    disabled={
+                                        sendingSkillId ===
+                                        skill.id
+                                    }
+                                    onClick={() =>
+                                        handleSendRequest(
+                                            skill,
+                                            type === "teach"
+                                                ? "learn"
+                                                : "teach"
+                                        )
+                                    }
+                                    className="
+                                        shrink-0
+                                        flex
+                                        items-center
+                                        justify-center
+                                        gap-2
+                                        rounded-lg
+                                        bg-violet-600
+                                        px-3
+                                        py-2
+                                        text-sm
+                                        font-medium
+                                        text-white
+                                        hover:bg-violet-700
+                                        disabled:opacity-50
+                                        disabled:cursor-not-allowed
+                                        transition
+                                    "
+                                >
+                                    <FiSend size={15} />
+
+                                    {sendingSkillId ===
+                                    skill.id
+                                        ? "Sending..."
+                                        : type === "teach"
+                                        ? `Learn ${skill.name}`
+                                        : `Teach ${skill.name}`}
+                                </button>
+                            </div>
                         ))}
                     </div>
 
+                    {message && (
+                        <div className="mt-4 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
+                            {message}
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                            {error}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
     );
 }
 
-function Section({ title, description, children }) {
+function Section({
+    title,
+    description,
+    children,
+}) {
     return (
         <section className="mb-10">
 
@@ -178,7 +412,6 @@ function Section({ title, description, children }) {
             <div className="space-y-3">
                 {children}
             </div>
-
         </section>
     );
 }
@@ -194,13 +427,14 @@ function Matches() {
                 setLoading(true);
                 setError("");
 
-                const result = await getMatches();
+                const result =
+                    await getMatches();
 
                 setMatches(result.data);
             } catch (error) {
                 setError(
                     error.response?.data?.message ||
-                    "Unable to load matches."
+                        "Unable to load matches."
                 );
             } finally {
                 setLoading(false);
@@ -255,6 +489,7 @@ function Matches() {
         <div className="max-w-5xl">
 
             {/* Header */}
+
             <div className="mb-8">
                 <div className="flex items-center gap-3">
                     <FiUsers
@@ -328,7 +563,6 @@ function Matches() {
                     ))}
                 </Section>
             )}
-
         </div>
     );
 }

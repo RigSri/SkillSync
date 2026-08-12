@@ -278,11 +278,14 @@ function Requests() {
                                             <div className="mt-5">
 
                                                 <p className="text-sm text-slate-500">
-                                                    {activeTab === "received"
-                                                        ? "Wants to learn"
-                                                        : "You want to learn"
-                                                    }
-                                                </p>
+    {request.requestType === "teach"
+        ? activeTab === "received"
+            ? "Wants to teach you"
+            : "You want to teach"
+        : activeTab === "received"
+            ? "Wants to learn from you"
+            : "You want to learn from them"}
+</p>
 
                                                 <p className="mt-1 text-xl font-medium text-slate-800">
                                                     {skill?.name}

@@ -33,10 +33,16 @@ const learningRequestSchema = new mongoose.Schema(
     "pending",
     "accepted",
     "rejected",
-    "cancelled"
+    "cancelled",
+    "expired"
 ],
             default: "pending",
         },
+        expiresAt: {
+    type: Date,
+    default: () =>
+        new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+},
         skill: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Skill",
@@ -61,7 +67,15 @@ learningRequestSchema.index(
         },
     }
 );
-
+learningRequestSchema.index(
+    { expiresAt: 1 },
+    {
+        expireAfterSeconds: 0,
+        partialFilterExpression: {
+            status: "pending",
+        },
+    }
+);
 module.exports = mongoose.model(
     "LearningRequest",
     learningRequestSchema

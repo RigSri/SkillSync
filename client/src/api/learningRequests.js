@@ -1,5 +1,14 @@
 import api from "./axios";
+export const sendLearningRequest = async (
+    requestData
+) => {
+    const response = await api.post(
+        "/learning-requests",
+        requestData
+    );
 
+    return response.data;
+};
 export const getReceivedRequests = async () => {
     const response = await api.get("/learning-requests/received");
     return response.data;
