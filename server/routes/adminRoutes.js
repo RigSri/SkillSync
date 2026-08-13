@@ -13,6 +13,7 @@ const {
     blockUser,
     unblockUser,
     getAnalytics,
+    resetDemoData,
 } = require("../controllers/adminController");
 
 
@@ -47,7 +48,10 @@ router.patch(
     "/users/:userId/unblock",
     unblockUser
 );
-
+router.post(
+    "/demo-data/reset",
+    resetDemoData
+);
 router.get(
     "/analytics",
     getAnalytics

@@ -55,3 +55,10 @@ export const unblockUser = async (userId) => {
 
     return response.data;
 };
+export const resetDemoData = async () => {
+    const response = await api.post(
+        "/admin/demo-data/reset"
+    );
+
+    return response.data;
+};

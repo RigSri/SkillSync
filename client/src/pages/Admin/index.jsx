@@ -12,6 +12,7 @@ import {
     updateReportStatus,
     blockUser,
     unblockUser,
+    resetDemoData,
 } from "../../api/admin";
 
 function Admin() {
@@ -25,7 +26,9 @@ function Admin() {
 
     const [actionLoading, setActionLoading] =
         useState(false);
-
+    const [resetting, setResetting] = useState(false);
+const [showResetConfirm, setShowResetConfirm] =
+    useState(false);
     useEffect(() => {
         let cancelled = false;
 
@@ -191,7 +194,24 @@ function Admin() {
             setActionLoading(false);
         }
     };
+const handleResetDemoData = async () => {
+    try {
+        setResetting(true);
+        setError("");
 
+        await resetDemoData();
+
+        window.location.reload();
+    } catch (error) {
+        setError(
+            error.response?.data?.message ||
+                "Unable to reset demo data."
+        );
+    } finally {
+        setResetting(false);
+        setShowResetConfirm(false);
+    }
+};
     if (loading) {
         return (
             <div className="flex min-h-[60vh] items-center justify-center">
@@ -331,7 +351,44 @@ function Admin() {
                 </div>
 
             </Card>
+            {/* Database Management */}
 
+<Card>
+    <div className="flex items-center justify-between gap-4">
+        <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+                Database Management
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+                Reset the application database and generate
+                fresh demo data for testing.
+            </p>
+        </div>
+
+        <Button
+            variant="secondary"
+            disabled={resetting}
+            onClick={() => setShowResetConfirm(true)}
+        >
+            {resetting
+                ? "Resetting..."
+                : "Reset & Generate Demo Data"}
+        </Button>
+    </div>
+
+    <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+        <p className="font-medium text-red-800">
+            Warning
+        </p>
+
+        <p className="mt-1 text-sm text-red-700">
+            This will permanently remove the current
+            application data and generate fresh demo users,
+            skills, matches, requests, sessions and reviews.
+        </p>
+    </div>
+</Card>         
             {/* Top Skills */}
 
             {analytics?.topSkills?.length > 0 && (
@@ -676,7 +733,42 @@ function Admin() {
                 </div>
 
             </Card>
+            {showResetConfirm && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-900">
+                Reset demo database?
+            </h2>
 
+            <p className="mt-2 text-sm text-slate-500">
+                This action will permanently delete the
+                current application data and generate fresh
+                demo data. This cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+                <Button
+                    variant="secondary"
+                    disabled={resetting}
+                    onClick={() =>
+                        setShowResetConfirm(false)
+                    }
+                >
+                    Cancel
+                </Button>
+
+                <Button
+                    disabled={resetting}
+                    onClick={handleResetDemoData}
+                >
+                    {resetting
+                        ? "Resetting..."
+                        : "Reset"}
+                </Button>
+            </div>
+        </div>
+    </div>
+)}
         </div>
     );
 }
