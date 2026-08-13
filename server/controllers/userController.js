@@ -156,8 +156,8 @@ const getUserCredibility = async (req, res) => {
         }
 
         const user = await User.findById(userId).select(
-            "name email profilePicture"
-        );
+    "name email profilePicture role"
+);
 
         if (!user) {
             return res.status(404).json({
@@ -165,6 +165,12 @@ const getUserCredibility = async (req, res) => {
                 message: "User not found.",
             });
         }
+        if (user.role === "admin") {
+    return res.status(403).json({
+        success: false,
+        message: "Admin credibility is not publicly accessible.",
+    });
+}
 
         // Get reviews received by this user
         const reviews = await Review.find({
@@ -248,8 +254,8 @@ const getUserProfile = async (req, res) => {
         }
 
         const user = await User.findById(userId).select(
-            "name email bio city timezone profilePicture availability createdAt"
-        );
+    "name email bio city timezone profilePicture availability createdAt role"
+);
 
         if (!user) {
             return res.status(404).json({
@@ -257,6 +263,12 @@ const getUserProfile = async (req, res) => {
                 message: "User not found.",
             });
         }
+        if (user.role === "admin") {
+    return res.status(403).json({
+        success: false,
+        message: "Admin profiles are not publicly accessible.",
+    });
+}
 
         const skills = await Skill.find({
             user: userId,
@@ -296,6 +308,12 @@ const searchUsers = async (req, res) => {
         const users = await User.find({
     _id: {
         $ne: new mongoose.Types.ObjectId(req.user.id),
+    },
+    role: {
+        $ne: "admin",
+    },
+    isBlocked: {
+        $ne: true,
     },
             $or: [
                 {
@@ -366,8 +384,8 @@ const searchSkillPartners = async (req, res) => {
             mode === "learn" ? "teach" : "learn";
 
         const skillQuery = {
-            user: { $ne: req.user.id },
-            type: skillType,
+    user: { $ne: req.user.id },
+    type: skillType,
             name: {
                 $regex: q.trim(),
                 $options: "i",
@@ -383,17 +401,24 @@ const searchSkillPartners = async (req, res) => {
         }
 
         const skills = await Skill.find(skillQuery)
-            .populate(
-                "user",
-                "name email city profilePicture"
-            )
+    .populate(
+        "user",
+        "name email city profilePicture role isBlocked"
+    )
             .sort({ createdAt: -1 })
             .limit(20);
 
         const results = [];
 
         for (const skill of skills) {
-            if (!skill.user) continue;
+    if (!skill.user) continue;
+
+    if (
+        skill.user.role === "admin" ||
+        skill.user.isBlocked
+    ) {
+        continue;
+    }
 
             const reviews = await Review.find({
                 reviewedUser: skill.user._id,

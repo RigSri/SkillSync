@@ -46,9 +46,4 @@ router.get(
     getUserCredibility
 );
 
-router.get(
-    "/skill-search",
-    authMiddleware,
-    searchSkillPartners
-);
 module.exports = router;
