@@ -8,6 +8,19 @@ export const getMyConversations = async () => {
     return response.data;
 };
 
+export const getOrCreateConversation = async (
+    matchId
+) => {
+    const response = await api.post(
+        "/chat/conversations",
+        {
+            matchId,
+        }
+    );
+
+    return response.data;
+};
+
 export const getMessages = async (conversationId) => {
     const response = await api.get(
         `/chat/conversations/${conversationId}/messages`
@@ -38,7 +51,6 @@ export const sendMessage = async (
 export const uploadChatFile = async (file) => {
     const formData = new FormData();
 
-    // IMPORTANT: must be "file"
     formData.append("file", file);
 
     const response = await api.post(

@@ -7,10 +7,12 @@ import {
 
 import {
     getMyConversations,
+    getOrCreateConversation,
     getMessages,
     sendMessage,
     uploadChatFile,
 } from "../../api/chat";
+import { getMyMatches } from "../../api/matches";
 
 import Button from "../../components/UI/Button";
 
@@ -55,41 +57,70 @@ function Chat() {
 }, []);
 
     useEffect(() => {
-        let cancelled = false;
+    let cancelled = false;
 
-        const loadConversations = async () => {
-            try {
-                setLoading(true);
-                setError("");
+    const loadConversations = async () => {
+        try {
+            setLoading(true);
+            setError("");
 
-                const result =
-                    await getMyConversations();
+            // Get all active matches for the logged-in user
+            const matchesResult = await getMyMatches();
 
-                if (cancelled) return;
+            if (cancelled) return;
 
-                setConversations(
-                    result.data || []
-                );
-            } catch (error) {
-                if (cancelled) return;
+            const matches = matchesResult.data || [];
 
-                setError(
-                    error.response?.data?.message ||
-                        "Unable to load conversations."
-                );
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
+            // Make sure every active match has a conversation.
+            // The backend creates it only if it does not already exist.
+            for (const match of matches) {
+                if (!match?._id) {
+                    continue;
+                }
+
+                try {
+                    await getOrCreateConversation(
+                        match._id
+                    );
+                } catch (conversationError) {
+                    console.error(
+                        "Unable to create/get conversation:",
+                        conversationError
+                    );
                 }
             }
-        };
 
-        loadConversations();
+            if (cancelled) return;
 
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+            // Now fetch the conversations
+            const result =
+                await getMyConversations();
+
+            if (cancelled) return;
+
+            setConversations(
+                result.data || []
+            );
+        } catch (error) {
+            if (cancelled) return;
+
+            setError(
+                error.response?.data?.message ||
+                    "Unable to load conversations."
+            );
+        } finally {
+            if (!cancelled) {
+                setLoading(false);
+            }
+        }
+    };
+
+    loadConversations();
+
+    return () => {
+        cancelled = true;
+    };
+}, []);
 
     const loadMessages = async (
         conversation

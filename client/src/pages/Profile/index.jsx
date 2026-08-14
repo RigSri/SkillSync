@@ -11,6 +11,7 @@ import {
 
 import { getMySkills } from "../../api/skills";
 import { getUserReviews } from "../../api/reviews";
+import { createReport } from "../../api/reports";
 import Button from "../../components/UI/Button";
 import Card from "../../components/UI/Card";
 import Badge from "../../components/UI/Badge";
@@ -32,6 +33,11 @@ const [credibilityLoading, setCredibilityLoading] =
     useState(true);
     const [editing, setEditing] = useState(false);
     const [availability, setAvailability] = useState([]);
+    const [reportOpen, setReportOpen] = useState(false);
+const [reportReason, setReportReason] = useState("");
+const [reportDescription, setReportDescription] = useState("");
+const [reportLoading, setReportLoading] = useState(false);
+const [reportMessage, setReportMessage] = useState("");
 const [editingAvailability, setEditingAvailability] =
     useState(false);
 
@@ -236,6 +242,44 @@ const handleDeleteAvailability = async (index) => {
         );
     }
 };
+const handleReportSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!user?._id) {
+        setReportMessage("Unable to identify this user.");
+        return;
+    }
+
+    if (!reportReason) {
+        setReportMessage("Please select a reason.");
+        return;
+    }
+
+    try {
+        setReportLoading(true);
+        setReportMessage("");
+
+        await createReport(
+            user._id,
+            reportReason,
+            reportDescription
+        );
+
+        setReportMessage(
+            "Report submitted successfully."
+        );
+
+        setReportReason("");
+        setReportDescription("");
+    } catch (error) {
+        setReportMessage(
+            error.response?.data?.message ||
+                "Unable to submit report."
+        );
+    } finally {
+        setReportLoading(false);
+    }
+};
     const handleChange = (event) => {
         const { name, value } = event.target;
 
@@ -332,14 +376,139 @@ const handleDeleteAvailability = async (index) => {
 
                     </div>
 
-                    {viewingOwnProfile && (
+                    {viewingOwnProfile ? (
     <Button onClick={() => setEditing(true)}>
         Edit Profile
+    </Button>
+) : (
+    <Button
+        variant="danger"
+        onClick={() => {
+            setReportOpen(true);
+            setReportMessage("");
+        }}
+    >
+        Report User
     </Button>
 )}
 
                 </div>
-            </Card>
+                        </Card>
+
+            {!viewingOwnProfile && reportOpen && (
+                <Card>
+                    <form
+                        onSubmit={handleReportSubmit}
+                        className="space-y-5"
+                    >
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900">
+                                Report {user.name}
+                            </h2>
+
+                            <p className="mt-1 text-sm text-slate-500">
+                                Tell us why you are reporting this user.
+                            </p>
+                        </div>
+
+                        {reportMessage && (
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                                {reportMessage}
+                            </div>
+                        )}
+
+                        <div>
+                            <label
+                                htmlFor="reportReason"
+                                className="mb-2 block text-sm font-medium text-slate-700"
+                            >
+                                Reason
+                            </label>
+
+                            <select
+                                id="reportReason"
+                                value={reportReason}
+                                onChange={(event) =>
+                                    setReportReason(
+                                        event.target.value
+                                    )
+                                }
+                                required
+                                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 outline-none"
+                            >
+                                <option value="">
+                                    Select a reason
+                                </option>
+
+                                <option value="harassment">
+                                    Harassment
+                                </option>
+
+                                <option value="spam">
+                                    Spam
+                                </option>
+
+                                <option value="inappropriate_behavior">
+                                    Inappropriate behavior
+                                </option>
+
+                                <option value="fake_profile">
+                                    Fake profile
+                                </option>
+
+                                <option value="other">
+                                    Other
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor="reportDescription"
+                                className="mb-2 block text-sm font-medium text-slate-700"
+                            >
+                                Description
+                            </label>
+
+                            <textarea
+                                id="reportDescription"
+                                value={reportDescription}
+                                onChange={(event) =>
+                                    setReportDescription(
+                                        event.target.value
+                                    )
+                                }
+                                rows={4}
+                                placeholder="Describe the issue..."
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none"
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <Button
+                                type="submit"
+                                variant="danger"
+                                disabled={reportLoading}
+                            >
+                                {reportLoading
+                                    ? "Submitting..."
+                                    : "Submit Report"}
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => {
+                                    setReportOpen(false);
+                                    setReportMessage("");
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
+            )}
 
             {/* Profile information */}
 
