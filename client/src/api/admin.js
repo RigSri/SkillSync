@@ -62,3 +62,7 @@ export const resetDemoData = async () => {
 
     return response.data;
 };
+export const getAdminHealth = async () => {
+    const response = await api.get("/admin/health");
+    return response.data;
+};

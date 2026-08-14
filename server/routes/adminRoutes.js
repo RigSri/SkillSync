@@ -9,17 +9,16 @@ const {
     getUsers,
     getReports,
     getFlaggedUsers,
+    getAnalytics,
     updateReportStatus,
     blockUser,
     unblockUser,
-    getAnalytics,
     resetDemoData,
+    getAdminHealth,
 } = require("../controllers/adminController");
-
 
 router.use(authMiddleware);
 router.use(adminMiddleware);
-
 
 router.get(
     "/users",
@@ -30,10 +29,12 @@ router.get(
     "/reports",
     getReports
 );
+
 router.get(
     "/flagged-users",
     getFlaggedUsers
 );
+
 router.patch(
     "/reports/:reportId",
     updateReportStatus
@@ -48,14 +49,20 @@ router.patch(
     "/users/:userId/unblock",
     unblockUser
 );
+
 router.post(
     "/demo-data/reset",
     resetDemoData
 );
+
 router.get(
     "/analytics",
     getAnalytics
 );
 
+router.get(
+    "/health",
+    getAdminHealth
+);
 
 module.exports = router;

@@ -5,6 +5,7 @@ import Badge from "../../components/UI/Badge";
 import Button from "../../components/UI/Button";
 
 import {
+        getAdminHealth,
     getAdminUsers,
     getAdminReports,
     getFlaggedUsers,
@@ -16,6 +17,7 @@ import {
 } from "../../api/admin";
 
 function Admin() {
+    const [health, setHealth] = useState(null);
     const [users, setUsers] = useState([]);
     const [reports, setReports] = useState([]);
     const [flaggedUsers, setFlaggedUsers] = useState([]);
@@ -38,16 +40,18 @@ const [showResetConfirm, setShowResetConfirm] =
                 setError("");
 
                 const [
-                    usersResult,
-                    reportsResult,
-                    flaggedResult,
-                    analyticsResult,
-                ] = await Promise.all([
-                    getAdminUsers(),
-                    getAdminReports(),
-                    getFlaggedUsers(),
-                    getAdminAnalytics(),
-                ]);
+    usersResult,
+    reportsResult,
+    flaggedResult,
+    analyticsResult,
+    healthResult,
+] = await Promise.all([
+    getAdminUsers(),
+    getAdminReports(),
+    getFlaggedUsers(),
+    getAdminAnalytics(),
+    getAdminHealth(),
+]);
 
                 if (cancelled) return;
 
@@ -59,6 +63,9 @@ const [showResetConfirm, setShowResetConfirm] =
                 setAnalytics(
                     analyticsResult.data || null
                 );
+                setHealth(
+    healthResult.data || null
+);
             } catch (error) {
                 if (cancelled) return;
 
@@ -590,7 +597,76 @@ const handleResetDemoData = async () => {
                 </div>
 
             </Card>
+<Card>
+    <div className="flex items-center justify-between">
+        <div>
+            <h2 className="text-lg font-semibold text-slate-800">
+                System Health
+            </h2>
 
+            <p className="mt-1 text-sm text-slate-500">
+                Current backend and database status.
+            </p>
+        </div>
+
+        <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700">
+            Healthy
+        </span>
+    </div>
+
+    <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+        <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+                API
+            </p>
+
+            <p className="mt-2 text-lg font-semibold text-slate-900">
+                {health?.backend || "Checking..."}
+            </p>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+                Database
+            </p>
+
+            <p className="mt-2 text-lg font-semibold text-slate-900">
+                {health?.database || "Checking..."}
+            </p>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+                Uptime
+            </p>
+
+            <p className="mt-2 text-lg font-semibold text-slate-900">
+                {health?.uptime || "Checking..."}
+            </p>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+                Memory
+            </p>
+
+            <p className="mt-2 text-lg font-semibold text-slate-900">
+                {health?.memory || "Checking..."}
+            </p>
+        </div>
+
+    </div>
+
+    {health?.checkedAt && (
+        <p className="mt-4 text-sm text-slate-400">
+            Last checked:{" "}
+            {new Date(
+                health.checkedAt
+            ).toLocaleString()}
+        </p>
+    )}
+</Card>
             {/* Reports */}
 
             <Card>

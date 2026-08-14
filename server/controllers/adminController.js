@@ -1,6 +1,64 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const getAdminHealth = async (req, res) => {
+    try {
+        const database =
+            mongoose.connection.readyState === 1
+                ? "Connected"
+                : "Disconnected";
 
+        const uptimeSeconds = process.uptime();
+
+        const hours = Math.floor(
+            uptimeSeconds / 3600
+        );
+
+        const minutes = Math.floor(
+            (uptimeSeconds % 3600) / 60
+        );
+
+        const seconds = Math.floor(
+            uptimeSeconds % 60
+        );
+
+        let uptime = "";
+
+        if (hours > 0) {
+            uptime += `${hours}h `;
+        }
+
+        if (minutes > 0 || hours > 0) {
+            uptime += `${minutes}m `;
+        }
+
+        uptime += `${seconds}s`;
+
+        const memoryUsage =
+            process.memoryUsage().rss /
+            (1024 * 1024);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                backend: "Healthy",
+                database,
+                uptime,
+                memory: `${memoryUsage.toFixed(0)} MB`,
+                checkedAt: new Date(),
+            },
+        });
+    } catch (error) {
+        console.error(
+            "Admin health check error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to check system health.",
+        });
+    }
+};
 const User = require("../models/User");
 const Report = require("../models/Report");
 const Match = require("../models/Match");
@@ -1091,4 +1149,5 @@ module.exports = {
     unblockUser,
     getAnalytics,
     resetDemoData,
+    getAdminHealth,
 };
