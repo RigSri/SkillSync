@@ -5,10 +5,19 @@ dotenv.config();
 const connectDB = require("./config/db");
 const app = require("./app");
 
-connectDB();
+const {
+    startSessionReminderService,
+} = require("./services/sessionReminderService");
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+    await connectDB();
+    startSessionReminderService();
+
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+};
+
+startServer();
