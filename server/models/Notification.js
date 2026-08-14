@@ -15,19 +15,20 @@ const notificationSchema = new mongoose.Schema(
         },
 
         type: {
-            type: String,
-            enum: [
-                "learning_request",
-                "request_accepted",
-                "request_rejected",
-                "session_scheduled",
-                "session_completed",
-                "session_cancelled",
-                "review_received",
-                "message_received",
-            ],
-            required: true,
-        },
+    type: String,
+    enum: [
+        "learning_request",
+        "request_accepted",
+        "request_rejected",
+        "session_scheduled",
+        "session_reminder",
+        "session_completed",
+        "session_cancelled",
+        "review_received",
+        "message_received",
+    ],
+    required: true,
+},
 
         title: {
             type: String,

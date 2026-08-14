@@ -26,13 +26,14 @@ function Sessions() {
 
     const [selectedMatch, setSelectedMatch] =
         useState(null);
-
+    const [selectedSkillId, setSelectedSkillId] =
+    useState("");
     const [scheduleForm, setScheduleForm] = useState({
         scheduledAt: "",
         duration: "60",
         meetingLink: "",
     });
-
+    
     const [scheduleLoading, setScheduleLoading] =
         useState(false);
 
@@ -56,10 +57,12 @@ const [progressPercentage, setProgressPercentage] =
     useState(0);
 const [milestones, setMilestones] = useState([]);
 const [newMilestone, setNewMilestone] = useState("");
-    const currentUserId =
-        JSON.parse(
-            localStorage.getItem("user") || "{}"
-        )._id;
+    const storedUser = JSON.parse(
+    localStorage.getItem("user") || "{}"
+);
+
+const currentUserId =
+    storedUser._id || storedUser.id;
 
     useEffect(() => {
         let cancelled = false;
@@ -136,17 +139,28 @@ const [newMilestone, setNewMilestone] = useState("");
     };
 
     const openScheduleForm = (match) => {
-        setSelectedMatch(match);
+    setSelectedMatch(match);
 
-        setScheduleForm({
-            scheduledAt: "",
-            duration: "60",
-            meetingLink: "",
-        });
+    const firstSkill =
+        (match.skills || []).find(
+            (skill) =>
+                skill &&
+                skill._id
+        );
 
-        setScheduleError("");
-        setError("");
-    };
+    setSelectedSkillId(
+        firstSkill?._id || ""
+    );
+
+    setScheduleForm({
+        scheduledAt: "",
+        duration: "60",
+        meetingLink: "",
+    });
+
+    setScheduleError("");
+    setError("");
+};
 
     const closeScheduleForm = () => {
         setSelectedMatch(null);
@@ -200,15 +214,20 @@ const [newMilestone, setNewMilestone] = useState("");
                 return;
             }
 
-            const skill =
-                selectedMatch.skills?.[0];
+            const skill = (
+    selectedMatch.skills || []
+).find(
+    (item) =>
+        String(item._id) ===
+        String(selectedSkillId)
+);
 
             if (!skill) {
-                setScheduleError(
-                    "No skill is available for this match."
-                );
-                return;
-            }
+    setScheduleError(
+        "Please select a valid skill."
+    );
+    return;
+}
 
             const result = await createSession({
                 matchId: selectedMatch._id,
@@ -584,15 +603,12 @@ const removeMilestone = (index) => {
 
                             myMatches.map((match) => {
 
-                                const otherUsers =
-                                    match.users.filter(
-                                        (user) =>
-                                            user._id !==
-                                            currentUserId
-                                    );
-
                                 const matchedUser =
-                                    otherUsers[0];
+    match.users.find(
+        (user) =>
+            String(user._id) !==
+            String(currentUserId)
+    );
 
                                 return (
                                     <div
@@ -619,51 +635,49 @@ const removeMilestone = (index) => {
 
                                             <div className="flex-1">
 
-                                                {match.skills?.map(
-                                                    (skill) => (
-                                                        <div
-                                                            key={
-                                                                skill._id
-                                                            }
-                                                            className="mb-3"
-                                                        >
+                                                {Array.from(
+    new Map(
+        (match.skills || [])
+            .filter(
+                (skill) =>
+                    skill &&
+                    skill.name
+            )
+            .map((skill) => [
+                skill.name
+                    .trim()
+                    .toLowerCase(),
+                skill,
+            ])
+    ).values()
+).map((skill) => (
+    <div
+        key={skill._id}
+        className="mb-3"
+    >
+        <div
+            className="
+                flex
+                items-center
+                gap-3
+            "
+        >
+            <h3 className="text-lg font-semibold text-slate-900">
+                {skill.name}
+            </h3>
 
-                                                            <div
-                                                                className="
-                                                                    flex
-                                                                    items-center
-                                                                    gap-3
-                                                                "
-                                                            >
-                                                                <h3 className="text-lg font-semibold text-slate-900">
-                                                                    {skill.name}
-                                                                </h3>
+            <Badge variant="success">
+                Active
+            </Badge>
+        </div>
 
-                                                                <Badge variant="success">
-                                                                    Active
-                                                                </Badge>
-                                                            </div>
-
-                                                            <p className="mt-1 text-sm text-slate-500">
-                                                                {skill.type ===
-                                                                "teach"
-                                                                    ? "You can teach this skill"
-                                                                    : "You want to learn this skill"}
-                                                            </p>
-
-                                                            <p className="mt-1 text-xs text-slate-400">
-                                                                {
-                                                                    skill.level
-                                                                }{" "}
-                                                                ·{" "}
-                                                                {
-                                                                    skill.category
-                                                                }
-                                                            </p>
-
-                                                        </div>
-                                                    )
-                                                )}
+        <p className="mt-1 text-xs text-slate-400">
+            {skill.level}{" "}
+            ·{" "}
+            {skill.category}
+        </p>
+    </div>
+))}
 
                                                 {matchedUser && (
                                                     <p className="mt-4 text-sm text-slate-600">
@@ -1075,7 +1089,69 @@ const removeMilestone = (index) => {
                                     {scheduleError}
                                 </div>
                             )}
+                            {/* Skill */}
 
+<div>
+    <label
+        htmlFor="selectedSkillId"
+        className="
+            mb-2
+            block
+            text-sm
+            font-medium
+            text-slate-700
+        "
+    >
+        Skill
+    </label>
+
+    <select
+        id="selectedSkillId"
+        value={selectedSkillId}
+        onChange={(event) =>
+            setSelectedSkillId(event.target.value)
+        }
+        required
+        className="
+            h-11
+            w-full
+            rounded-lg
+            border
+            border-slate-300
+            bg-white
+            px-3
+            outline-none
+            transition
+            focus:border-violet-500
+            focus:ring-1
+            focus:ring-violet-500
+        "
+    >
+        {Array.from(
+            new Map(
+                (selectedMatch.skills || [])
+                    .filter(
+                        (skill) =>
+                            skill &&
+                            skill.name
+                    )
+                    .map((skill) => [
+                        skill.name
+                            .trim()
+                            .toLowerCase(),
+                        skill,
+                    ])
+            ).values()
+        ).map((skill) => (
+            <option
+                key={skill._id}
+                value={skill._id}
+            >
+                {skill.name}
+            </option>
+        ))}
+    </select>
+</div>
                             {/* Date & Time */}
 
                             <div>
